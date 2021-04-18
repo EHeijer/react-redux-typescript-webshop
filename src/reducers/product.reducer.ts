@@ -43,7 +43,7 @@ const ProductReducer = (state: ProductState = initialState, action: any): Produc
     }
 }
 
-const apiUrl = 'api/products';
+const apiUrl = 'http://localhost:8080/api/products';
 
 export const getAllProducts = (page: number, size: number, sort: string) => {
     const requestUrl = `${apiUrl}${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;

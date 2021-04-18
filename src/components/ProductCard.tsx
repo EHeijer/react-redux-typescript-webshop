@@ -1,5 +1,6 @@
 import { Button, Card, CardContent, CardHeader, CardMedia, makeStyles, Theme, Typography } from '@material-ui/core'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
+import { IProduct } from '../model/product.model';
 
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -61,7 +62,12 @@ const useStyles = makeStyles((theme: Theme) => {
     }
 })
 
-export default function ProductCard({  }) {
+export interface IProductCard {
+    product: IProduct;
+}
+
+const ProductCard = (props: IProductCard) => {
+    const { product } = props;
     const classes = useStyles();
     return (
         <div>
@@ -88,4 +94,5 @@ export default function ProductCard({  }) {
             </Card>
         </div>
     )
-}
+};
+export default ProductCard;
