@@ -2,12 +2,18 @@ import { AppBar, Badge, fade, IconButton, InputBase, makeStyles, Theme, Toolbar 
 import SearchIcon from '@material-ui/icons/Search';
 import PersonOutlineIcon from '@material-ui/icons/PersonOutline';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
+import CartDrawer, { useShareableState } from './CartDrawer';
+import { useState } from 'react';
+import { useBetween } from 'use-between';
 
 
 const drawerWidth = 300;
 const appBarHeight = 80
 const useStyles = makeStyles((theme: Theme) => {
     return {
+        root: {
+            width: 0,
+        },
         appbar: {
             background: 'transparent',
             width: `calc(100% - ${drawerWidth}px)`,
@@ -70,7 +76,14 @@ const useStyles = makeStyles((theme: Theme) => {
  
 export default function Navbar() {
     const classes = useStyles();
+    const { open, setOpen } = useBetween(useShareableState);
+
+    const handleDrawerOpen = () => {
+        setOpen(true);
+        console.log(open)
+    }
     return (
+        <div className={classes.root}>
         <AppBar className={classes.appbar} elevation={0}>
             <Toolbar>
                 <div className={classes.search}>
@@ -95,7 +108,7 @@ export default function Navbar() {
                     >
                         <PersonOutlineIcon classes={{root: classes.accountAndCart}} fontSize="large"/>
                     </IconButton>
-                    <IconButton>
+                    <IconButton onClick={handleDrawerOpen}>
                         <Badge
                             badgeContent={2} 
                             color="error"
@@ -106,5 +119,7 @@ export default function Navbar() {
                 </div>
             </Toolbar>
         </AppBar>
+        <CartDrawer open={open} handleDrawerOpen={handleDrawerOpen}/>
+        </div>
     )
 }

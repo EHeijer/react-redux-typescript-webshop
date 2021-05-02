@@ -3,14 +3,15 @@ import { IProduct } from "../model/product.model"
 import { FAILURE, REQUEST, SUCCESS } from "./action-type.util";
 
 export const ACTION_TYPES = {
-    FETCH_PRODUCT_LIST: 'techformance/FETCH_PRODUCT_LIST',
-    FETCH_PRODUCT_LIST_BY_CATERGORY: 'techformance/FETCH_PRODUCT_LIST_BY_CATERGORY'
+    FETCH_PRODUCT_LIST: 'FETCH_PRODUCT_LIST',
+    FETCH_PRODUCT_LIST_BY_CATERGORY: 'FETCH_PRODUCT_LIST_BY_CATERGORY'
 }
 
 const initialState = {
     loading: false,
     errorMessage: null,
-    entities: [] as Array<IProduct>
+    products: [] as Array<IProduct>,
+    totalItems: 0
 }
 
 export type ProductState = Readonly<typeof initialState>;
@@ -36,10 +37,31 @@ const ProductReducer = (state: ProductState = initialState, action: any): Produc
             return {
                 ...state,
                 loading: false,
-                entities: action.payload.data,
+                products: action.payload,
+                totalItems: action.payload.length
             };
         default:
             return state;
+    }
+}
+
+const fetchProductsRequest = () => {
+    return {
+        type: REQUEST(ACTION_TYPES.FETCH_PRODUCT_LIST)
+    }
+}
+
+const fetchProductsSuccess = (products: IProduct[]) => {
+    return {
+        type: SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST),
+        payload: products
+    }
+}
+
+const fetchProductsFailure = (error: string) => {
+    return {
+        type: FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST),
+        payload: error
     }
 }
 
@@ -47,9 +69,17 @@ const apiUrl = 'http://localhost:8080/api/products';
 
 export const getAllProducts = (page: number, size: number, sort: string) => {
     const requestUrl = `${apiUrl}${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;
-    return {
-        type: ACTION_TYPES.FETCH_PRODUCT_LIST,
-        payload: axios.get<IProduct>(requestUrl)
+    return (dispatch: any) => {
+        dispatch(fetchProductsRequest)
+        axios.get<IProduct[]>(requestUrl)
+        .then(response => {
+            const products = response.data
+            dispatch(fetchProductsSuccess(products))
+        })
+        .catch(error => {
+            const errorMsg = error.message
+            dispatch(fetchProductsFailure(errorMsg))
+        })
     };
 }
 

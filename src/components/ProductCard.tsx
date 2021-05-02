@@ -7,7 +7,7 @@ const useStyles = makeStyles((theme: Theme) => {
     return {
         productCard: {
             height: 400,
-            width: '100%',
+            width: 250,
         },
         header: {
             height: 20
@@ -69,23 +69,24 @@ export interface IProductCard {
 const ProductCard = (props: IProductCard) => {
     const { product } = props;
     const classes = useStyles();
+    console.log(product);
     return (
         <div>
             <Card elevation={0} className={classes.productCard}>
                 <CardHeader className={classes.header}/>
                 <CardMedia 
                     className={classes.image}
-                    image={`./c4.jpg`}
+                    image={`./${product.imageUrl}`}
                     title="product name"
                 />
                 <CardContent classes={{root: classes.content}} >
                     <div className={classes.nameAndDesc}>
-                        <Typography className={classes.name} variant="body1">Product Name</Typography>
-                        <Typography className={classes.desc} variant="body2">Product description blablabl blalbalba albalbabn</Typography>
+                        <Typography className={classes.name} variant="body1">{product.productName}</Typography>
+                        <Typography className={classes.desc} variant="body2">{product.brand}</Typography>
                     </div>
                     
                     <div className={classes.priceAndBuy}>
-                        <Typography className={classes.price} variant="h6">$29.90</Typography>
+                        <Typography className={classes.price} variant="h6">{product.price}</Typography>
                         <Button className={classes.buyButton}>
                             <ShoppingCartIcon classes={{root: classes.cartIcon}} fontSize="small" />
                             Add To Cart</Button>

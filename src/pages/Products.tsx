@@ -1,13 +1,18 @@
-import { Container, Grid, makeStyles, Theme, Typography } from '@material-ui/core'
-import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
-import { RouteComponentProps } from 'react-router-dom'
-import ProductCard from '../components/ProductCard'
-import { getSortState, IPaginationBaseState } from '../components/utils/pagination'
-import { IRootState } from '../reducers/index'
+import { Button, Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import Pagination from '@material-ui/lab/Pagination';
+import { useEffect, useState } from "react";
+import { connect } from "react-redux";
+import { RouteComponentProps } from "react-router";
+import { isPropertyDeclaration } from "typescript";
+import ProductCard from "../components/ProductCard";
+import { getSortState, IPaginationBaseState } from "../components/utils/pagination";
+import { IProduct } from "../model/product.model";
+import { IRootState } from "../reducers";
 import { getAllProducts } from '../reducers/product.reducer'
 
-export interface IProductsProp extends StateProps, DispatchProps, RouteComponentProps { }
+export interface IProductsProp extends StateProps, RouteComponentProps { 
+    getAllProducts: any
+}
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -19,69 +24,82 @@ const useStyles = makeStyles((theme: Theme) => {
 
         },
         productItem: {
-            maxWidth: 300
+            maxWidth: 400
+        },
+        paginationGrid: {
+            marginTop: 30
         }
     }
 })
 
+
 export type IProductsState = IPaginationBaseState;
 
-export const Products = (props: IProductsProp) => {
-    const { products } = props;
+function Products(props: IProductsProp) {
+    const { products, totalItems, loading, errorMessage} = props;
     const classes = useStyles();
     const [activePage, setActivePage] = useState(1);
-    const [productsState, setProductsState] = useState(
-        {...getSortState(props.location, 12) } as IProductsState
-    );
-
-    const getProducts = () => {
-        const { itemsPerPage, sort, order } = productsState;
-        props.getAllProducts(activePage - 1, itemsPerPage, `${sort},${order}`);
-    };
+    const [sort, setSort] = useState("");
+    const [order, setOrder] = useState("");
+    const [itemsPerPage, setItemsPerPage] = useState(20);
+    // const [location, setLocation] = useState(props.location);
+    const [fetchedProducts, setFetchedProducts] = useState([] as Array<IProduct>)
+    // const [loading, setLoading] = useState(false);
+    // const [productsState, setProductsState] = useState({ ...getSortState(props.location, 20)});
 
     useEffect(() => {
-        getProducts();
+        props.getAllProducts(activePage - 1, itemsPerPage, `${sort},${order}`);
+        setFetchedProducts(products);
     }, [activePage]);
-    
+
+    console.log(fetchedProducts);
     return (
-        <Container fixed className={classes.productContainer}>
+        loading ? (
+            <h2>Loading...</h2>
+        ) : errorMessage ? (
+            <h2>{errorMessage}</h2>
+        ) : (
+            <Container fixed className={classes.productContainer}>
             <Typography variant="h4" gutterBottom color="primary" align="center">ALL PRODUCTS</Typography>
-            <Grid container spacing={3} justify="center" className={classes.gridContainer}>
-                {products ? products.map((product, i) => (
-                    <Grid item className={classes.productItem} key={product.id}>
-                        <ProductCard product={product}/>
+                <Grid container className={classes.gridContainer}>
+                    <Grid container item spacing={3} justify="center">
+                    {products && products.map((product, i) => (
+                        <Grid item className={classes.productItem} key={`showproduct-${i}`}>
+                            <ProductCard product={product}/>
+                        </Grid>
+                        
+                    ))}
                     </Grid>
-                )) : null}
-                {/* <Grid className={classes.productItem} item  >
-                    <ProductCard />
+                
+            
+                    <Grid container item direction="column" className={classes.paginationGrid} alignItems="center" spacing={2}>
+                        <Pagination 
+                            count={Math.ceil(totalItems / itemsPerPage)}
+                            page={activePage}
+                            onChange={(event: object, page: number) => setActivePage(page)}
+                            variant="outlined"
+                        />
+                    </Grid>
                 </Grid>
-                <Grid className={classes.productItem} item >
-                    <ProductCard />
-                </Grid>
-                <Grid className={classes.productItem} item>
-                    <ProductCard />
-                </Grid>
-                <Grid className={classes.productItem} item>
-                    <ProductCard />
-                </Grid>
-                <Grid className={classes.productItem} item  >
-                    <ProductCard />
-                </Grid>
-                <Grid className={classes.productItem} item >
-                    <ProductCard />
-                </Grid> */}
-            </Grid>
         </Container>
+        )
+        
     )
 }
 
 const mapStateToProps = ({ product }: IRootState) => ({
-    products: product.entities
+    products: product.products,
+    totalItems: product.totalItems,
+    loading: product.loading,
+    errorMessage: product.errorMessage
 })
 
-const mapDispatchToProps = { getAllProducts };
+const mapDispatchToProps = (dispatch: any) => {
+    return {
+        getAllProducts: (page: number, size: number, sort: string) => dispatch(getAllProducts(page, size, sort))
+    }
+}
 
 type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
 
 export default connect(mapStateToProps, mapDispatchToProps)(Products);
