@@ -1,5 +1,3 @@
-import { EnumDeclaration } from "typescript";
-
 export interface IProduct {
     id?: number;
     brand?: string;

@@ -1,10 +1,15 @@
-import { AppBar, Badge, fade, IconButton, InputBase, makeStyles, Theme, Toolbar } from '@material-ui/core'
+import { AppBar, Badge, fade, IconButton, InputBase, makeStyles, Theme, Toolbar, Typography } from '@material-ui/core'
 import SearchIcon from '@material-ui/icons/Search';
 import PersonOutlineIcon from '@material-ui/icons/PersonOutline';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
-import CartDrawer, { useShareableState } from './CartDrawer';
-import { useState } from 'react';
+import CartDrawer from './CartDrawer';
+import { useShareableState } from '../utils/shareable-state';
+import { useEffect, useState } from 'react';
 import { useBetween } from 'use-between';
+import { IRootState } from '../../reducers';
+import { connect } from 'react-redux';
+import LoginModal from '../LoginModal';
+import RegisterModal from '../RegisterModal';
 
 
 const drawerWidth = 300;
@@ -18,7 +23,7 @@ const useStyles = makeStyles((theme: Theme) => {
             background: 'transparent',
             width: `calc(100% - ${drawerWidth}px)`,
             padding: "0.5rem",
-            height: appBarHeight
+            height: appBarHeight,
         },
         search: {
             position: 'relative',
@@ -70,18 +75,77 @@ const useStyles = makeStyles((theme: Theme) => {
         },
         accountAndCart: {
             color: theme.palette.primary.dark
+        },
+        cartButton: {
+
+        },
+        emptyCartMessage: {
+            position: 'absolute',
+            right: 37,
+            top: 75
+        },
+        box: {
+            width: 300,
+            padding: 15,
+            background: 'white',
+            position: 'relative',
+            color: theme.palette.secondary.dark,
+            boxShadow: `${theme.palette.primary.light} 0 0 0.5rem`
+        },
+        arrow: {
+            '&:after': {
+                content: '" "',
+                position: 'absolute',
+                right: 10,
+                top: '-15px',
+                borderTop: 'none',
+                borderRight: '15px solid transparent',
+                borderLeft: '15px solid transparent',
+                borderBottom: '15px solid white',
+            }
+
         }
     }
 }) 
- 
-export default function Navbar() {
+
+export interface INavbarProp extends StateProps {
+
+}
+  
+function Navbar(props: INavbarProp) {
     const classes = useStyles();
     const { open, setOpen } = useBetween(useShareableState);
+    const { cartDrawerOpen, setCartDrawerOpen } = useBetween(useShareableState);
+    const { loginModalOpen, setLoginModalOpen } = useBetween(useShareableState);
+    const { numOfItems } = props;
+    const [ openEmptyCartMessage, setOpenEmptyCartMessage ] = useState(false);
+    const emptyCartMessage = document.getElementsByClassName('emptyCartMessage');
+    const cartButton = document.getElementsByClassName('cartButton');
 
     const handleDrawerOpen = () => {
-        setOpen(true);
-        console.log(open)
+        const cart = localStorage.getItem("cart") ? JSON.parse(localStorage.getItem('cart')!) : null;
+        if(cart !== null && cart.length < 1) {
+            if(!openEmptyCartMessage) {
+                setOpenEmptyCartMessage(true);
+            }else {
+                setOpenEmptyCartMessage(false);
+            }
+            
+        }else if(cart === null) {
+            if(!openEmptyCartMessage) {
+                setOpenEmptyCartMessage(true);
+            }else {
+                setOpenEmptyCartMessage(false);
+            }
+        } else {
+            setCartDrawerOpen(true);
+        }
     }
+
+    const handleLoginOpen = () => {
+        setLoginModalOpen(true);
+    }
+    
     return (
         <div className={classes.root}>
         <AppBar className={classes.appbar} elevation={0}>
@@ -105,12 +169,13 @@ export default function Navbar() {
                 <div>
                     <IconButton
                         aria-haspopup="true"
+                        onClick={handleLoginOpen}
                     >
                         <PersonOutlineIcon classes={{root: classes.accountAndCart}} fontSize="large"/>
                     </IconButton>
-                    <IconButton onClick={handleDrawerOpen}>
+                    <IconButton className={classes.cartButton} onClick={handleDrawerOpen}>
                         <Badge
-                            badgeContent={2} 
+                            badgeContent={numOfItems} 
                             color="error"
                         >
                             <ShoppingCartIcon classes={{root: classes.accountAndCart}} fontSize="large" />
@@ -118,8 +183,24 @@ export default function Navbar() {
                     </IconButton>
                 </div>
             </Toolbar>
+            {openEmptyCartMessage ? 
+                <div className={classes.emptyCartMessage}>
+                    <div className={classes.box + ' ' + classes.arrow}>
+                        <Typography variant="h6">Your cart is empty</Typography>
+                    </div>
+                </div> : null}
         </AppBar>
-        <CartDrawer open={open} handleDrawerOpen={handleDrawerOpen}/>
+        <CartDrawer open={cartDrawerOpen} handleDrawerOpen={handleDrawerOpen}/>
+        <LoginModal handleLoginOpen={handleLoginOpen}/>
+        <RegisterModal />
         </div>
     )
 }
+
+const mapStateToProps = ({ cart }: IRootState) => ({
+    numOfItems: cart.numOfItems
+})
+
+type StateProps = ReturnType<typeof mapStateToProps>;
+
+export default connect(mapStateToProps)(Navbar);

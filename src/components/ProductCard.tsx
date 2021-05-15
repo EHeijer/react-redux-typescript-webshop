@@ -1,7 +1,13 @@
 import { Button, Card, CardContent, CardHeader, CardMedia, makeStyles, Theme, Typography } from '@material-ui/core'
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
+import { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { useBetween } from 'use-between';
+import { ICartItem } from '../model/cart-item.model';
 import { IProduct } from '../model/product.model';
-
+import { IRootState } from '../reducers';
+import { addItemToCart } from '../reducers/cart.reducer';
+import { useShareableState } from './utils/shareable-state';
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -62,14 +68,19 @@ const useStyles = makeStyles((theme: Theme) => {
     }
 })
 
-export interface IProductCard {
-    product: IProduct;
+export interface IProductCardProps extends StateProps{
+    product: IProduct,
+    addItemToCart: any
 }
 
-const ProductCard = (props: IProductCard) => {
+const ProductCard = (props: IProductCardProps) => {
     const { product } = props;
     const classes = useStyles();
-    console.log(product);
+    
+    const handleAddToCart = (product: IProduct) => {
+        props.addItemToCart(product);
+    }
+
     return (
         <div>
             <Card elevation={0} className={classes.productCard}>
@@ -86,14 +97,30 @@ const ProductCard = (props: IProductCard) => {
                     </div>
                     
                     <div className={classes.priceAndBuy}>
-                        <Typography className={classes.price} variant="h6">{product.price}</Typography>
-                        <Button className={classes.buyButton}>
+                        <Typography className={classes.price} variant="h6">${product.price?.toFixed(2)}</Typography>
+                        <Button className={classes.buyButton} onClick={() => handleAddToCart(product)}>
                             <ShoppingCartIcon classes={{root: classes.cartIcon}} fontSize="small" />
-                            Add To Cart</Button>
+                            <Typography variant="body2">Add To Cart</Typography>
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
         </div>
     )
 };
-export default ProductCard;
+
+const mapStateToProps = ({ cart }: IRootState) => ({
+    cartItems: cart.cartItems,
+    cartSum: cart.cartSum,
+    numOfItems: cart.numOfItems
+})
+
+const mapDispatchToProps = (dispatch: any) => {
+    return {
+        addItemToCart: (product: IProduct) => dispatch(addItemToCart(product))
+    }
+}
+
+type StateProps = ReturnType<typeof mapStateToProps>;
+
+export default connect(mapStateToProps, mapDispatchToProps)(ProductCard);

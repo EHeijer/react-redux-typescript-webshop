@@ -1,5 +1,7 @@
 import { makeStyles } from '@material-ui/core';
 import React from 'react'
+import { useLocation } from 'react-router';
+import OrderConfirm from '../../pages/OrderConfirm';
 import DrawerComponent from './DrawerComponent';
 import Footer from './Footer';
 
@@ -33,16 +35,22 @@ interface Props extends React.HTMLAttributes<Element> {
   
 
 export default function AppLayout({ children}: Props) {
-
+    const location = useLocation();
+    console.log(location.pathname);
     const classes = useStyles();
     return (
-        <div className={classes.root}>
-            <DrawerComponent />
-            <Navbar />
-            <div className={classes.flex}>
-                <div className={classes.page}> { children } </div>
-                <Footer />
-            </div>
+        <div>
+            {location.pathname === '/order-confirm' ? <OrderConfirm /> : 
+                <div className={classes.root}>
+                <DrawerComponent />
+                <Navbar />
+                <div className={classes.flex}>
+                    <div className={classes.page}> { children } </div>
+                    <Footer />
+                </div>
+                </div>
+            }
+            
             
         </div>
     )

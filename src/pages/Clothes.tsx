@@ -1,18 +1,10 @@
-import { Button, Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
-import Pagination from '@material-ui/lab/Pagination';
-import { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router";
-import { isPropertyDeclaration } from "typescript";
-import ProductCard from "../components/ProductCard";
-import { getSortState, IPaginationBaseState } from "../components/utils/pagination";
-import { IProduct } from "../model/product.model";
-import { IRootState } from "../reducers";
-import { getAllProducts } from '../reducers/product.reducer'
-
-export interface IProductsProp extends StateProps{ 
-    getAllProducts: any
-}
+import { Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core"
+import Pagination from "@material-ui/lab/Pagination"
+import { useEffect, useState } from "react"
+import { connect } from "react-redux"
+import ProductCard from "../components/ProductCard"
+import { IRootState } from "../reducers"
+import { getAllProductsByCategory } from "../reducers/product.reducer"
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -47,16 +39,20 @@ const useStyles = makeStyles((theme: Theme) => {
     }
 })
 
-function Products(props: IProductsProp) {
-    const { products, totalItems, loading, errorMessage} = props;
+export interface IClothesProp extends StateProps{
+    getAllClothes: any
+}
+
+function Clothes(props: IClothesProp) {
+    const { clothes, totalItems, loading, errorMessage } = props;
     const classes = useStyles();
-    const [activePage, setActivePage] = useState(1);
+    const [ activePage, setActivePage ] = useState(1);
     const [sort, setSort] = useState("");
     const [order, setOrder] = useState("");
     const itemsPerPage = 8;
 
     useEffect(() => {
-        props.getAllProducts(activePage - 1, itemsPerPage, `${sort},${order}`);
+        props.getAllClothes(activePage - 1, itemsPerPage, `${sort},${order}`, 'CLOTHES');
     }, [activePage]);
 
     return (
@@ -66,10 +62,10 @@ function Products(props: IProductsProp) {
             <h2>{errorMessage}</h2>
         ) : (
             <Container fixed className={classes.productContainer}>
-            <Typography variant="h4" gutterBottom color="primary" align="center">ALL PRODUCTS</Typography>
-                <Grid container className={classes.gridContainer}>
-                    <Grid container item spacing={3} justify="center" className={classes.itemWrapper} >
-                    {products && products.map((product, i) => (
+            <Typography variant="h4" gutterBottom color="primary" align="center">CLOTHES</Typography>
+                <Grid container className={classes.gridContainer} >
+                    <Grid container item spacing={3} justify="center" className={classes.itemWrapper}>
+                    {clothes && clothes.map((product, i) => (
                         <Grid item className={classes.productItem} key={`showproduct-${i}`}>
                             <ProductCard product={product}/>
                         </Grid>
@@ -88,12 +84,11 @@ function Products(props: IProductsProp) {
                 </Grid>
         </Container>
         )
-        
     )
 }
 
 const mapStateToProps = ({ product }: IRootState) => ({
-    products: product.products,
+    clothes: product.products,
     totalItems: product.totalItems,
     loading: product.loading,
     errorMessage: product.errorMessage
@@ -101,10 +96,10 @@ const mapStateToProps = ({ product }: IRootState) => ({
 
 const mapDispatchToProps = (dispatch: any) => {
     return {
-        getAllProducts: (page: number, size: number, sort: string) => dispatch(getAllProducts(page, size, sort))
+        getAllClothes: (page: number, size: number, sort: string, category: string) => dispatch(getAllProductsByCategory(page, size, sort, category))
     }
 }
 
 type StateProps = ReturnType<typeof mapStateToProps>;
 
-export default connect(mapStateToProps, mapDispatchToProps)(Products);
+export default connect(mapStateToProps, mapDispatchToProps)(Clothes);

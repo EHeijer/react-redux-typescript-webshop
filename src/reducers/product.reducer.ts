@@ -38,7 +38,7 @@ const ProductReducer = (state: ProductState = initialState, action: any): Produc
                 ...state,
                 loading: false,
                 products: action.payload,
-                totalItems: action.payload.length
+                totalItems: parseInt(action.headers['x-total-items'])  
             };
         default:
             return state;
@@ -51,16 +51,38 @@ const fetchProductsRequest = () => {
     }
 }
 
-const fetchProductsSuccess = (products: IProduct[]) => {
+const fetchProductsSuccess = (products: IProduct[], headers: any) => {
     return {
         type: SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST),
-        payload: products
+        payload: products,
+        headers: headers
     }
 }
 
 const fetchProductsFailure = (error: string) => {
     return {
         type: FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST),
+        payload: error
+    }
+}
+
+const fetchProductsByCategoryRequest = () => {
+    return {
+        type: REQUEST(ACTION_TYPES.FETCH_PRODUCT_LIST_BY_CATERGORY)
+    }
+}
+
+const fetchProductsByCategorySuccess = (products: IProduct[], headers: any) => {
+    return {
+        type: SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST_BY_CATERGORY),
+        payload: products,
+        headers: headers
+    }
+}
+
+const fetchProductsByCategoryFailure = (error: string) => {
+    return {
+        type: FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST_BY_CATERGORY),
         payload: error
     }
 }
@@ -73,8 +95,9 @@ export const getAllProducts = (page: number, size: number, sort: string) => {
         dispatch(fetchProductsRequest)
         axios.get<IProduct[]>(requestUrl)
         .then(response => {
-            const products = response.data
-            dispatch(fetchProductsSuccess(products))
+            const products = response.data;
+            const headers = response.headers;
+            dispatch(fetchProductsSuccess(products, headers))
         })
         .catch(error => {
             const errorMsg = error.message
@@ -82,5 +105,23 @@ export const getAllProducts = (page: number, size: number, sort: string) => {
         })
     };
 }
+
+export const getAllProductsByCategory = (page: number, size: number, sort: string, category: string) => {
+    const requestUrl = `${apiUrl}/${category}${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;
+    return (dispatch: any) => {
+        dispatch(fetchProductsByCategoryRequest)
+        axios.get<IProduct[]>(requestUrl)
+        .then(response => {
+            const products = response.data;
+            const headers = response.headers;
+            dispatch(fetchProductsByCategorySuccess(products, headers))
+        })
+        .catch(error => {
+            const errorMsg = error.message
+            dispatch(fetchProductsByCategoryFailure(errorMsg))
+        })
+    };
+}
+
 
 export default ProductReducer;

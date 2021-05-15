@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
 import { amber } from '@material-ui/core/colors';
 import Home from './pages/Home';
 import Products from './pages/Products';
+import Routes from './routes';
 
 
 const theme = createMuiTheme({
@@ -11,7 +12,7 @@ const theme = createMuiTheme({
     primary: {
       main: '#515151',
       dark: '#262626',
-      light: '#efefef',
+      light: '#dedede',
       contrastText: '#fff'
     },
     secondary: amber
@@ -31,14 +32,15 @@ function App() {
     <ThemeProvider theme={theme}>
       <Router>
         <AppLayout>
-          <Switch>
+          <Routes />
+          {/* <Switch>
             <Route exact path="/">
               <Home />
             </Route>
             <Route path="/products">
               <Products />
             </Route>
-          </Switch>
+          </Switch> */}
         </AppLayout>
       </Router>
     </ThemeProvider>
