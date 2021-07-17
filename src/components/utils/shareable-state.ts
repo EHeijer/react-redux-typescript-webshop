@@ -5,6 +5,7 @@ export const useShareableState = () => {
     const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
     const [loginModalOpen, setLoginModalOpen] =  useState(false);
     const [registerModalOpen, setRegisterModalOpen] =  useState(false);
+    const [orderModalOpen, setOrderModalOpen] = useState(false);
     const [numberOfItemsInCart, setNumberOfItemsInCart] = useState(0);
     return {
         open,
@@ -15,6 +16,8 @@ export const useShareableState = () => {
         setLoginModalOpen,
         registerModalOpen, 
         setRegisterModalOpen,
+        orderModalOpen,
+        setOrderModalOpen,
         numberOfItemsInCart,
         setNumberOfItemsInCart
     }

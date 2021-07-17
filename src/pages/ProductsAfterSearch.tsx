@@ -1,18 +1,15 @@
-import { Button, Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
-import Pagination from '@material-ui/lab/Pagination';
+import { Container, Grid, makeStyles, Theme, Typography } from "@material-ui/core";
+import Pagination from "@material-ui/lab/Pagination";
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router";
-import { isPropertyDeclaration } from "typescript";
+import {useParams} from 'react-router'
 import ProductCard from "../components/ProductCard";
-import { getSortState, IPaginationBaseState } from "../components/utils/pagination";
-import { IProduct } from "../model/product.model";
 import { IRootState } from "../reducers";
-import { getAllProducts } from '../reducers/product.reducer'
+import { getAllProductsAfterSearch } from "../reducers/product.reducer";
 import ErrorPage from "./ErrorPage";
 
-export interface IProductsProp extends StateProps{ 
-    getAllProducts: any
+export interface IProductsAfterSearchProp extends StateProps{ 
+    getAllProductsAfterSearch: any,
 }
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -23,6 +20,9 @@ const useStyles = makeStyles((theme: Theme) => {
         gridContainer: {
             padding: 15
 
+        },
+        title: {
+            color: theme.palette.secondary.dark
         },
         itemWrapper: {
             display: 'grid',
@@ -48,16 +48,17 @@ const useStyles = makeStyles((theme: Theme) => {
     }
 })
 
-function Products(props: IProductsProp) {
+function ProductsAfterSearch(props: IProductsAfterSearchProp) {
     const { products, totalItems, loading, errorMessage} = props;
     const classes = useStyles();
     const [activePage, setActivePage] = useState(1);
     const [sort, setSort] = useState("");
     const [order, setOrder] = useState("");
     const itemsPerPage = 8;
+    const { input } = useParams<{input?: string}>();
 
     useEffect(() => {
-        props.getAllProducts(activePage - 1, itemsPerPage, `${sort},${order}`);
+        props.getAllProductsAfterSearch(activePage - 1, itemsPerPage, `${sort},${order}`, input);
     }, [activePage]);
 
     return (
@@ -67,7 +68,7 @@ function Products(props: IProductsProp) {
             <ErrorPage />
         ) : (
             <Container fixed className={classes.productContainer}>
-            <Typography variant="h4" gutterBottom color="primary" align="center">ALL PRODUCTS</Typography>
+            <Typography variant="h4" gutterBottom className={classes.title} align="center">Found {totalItems} result for '{input}'</Typography>
                 <Grid container className={classes.gridContainer}>
                     <Grid container item spacing={3} justify="center" className={classes.itemWrapper} >
                     {products && products.map((product, i) => (
@@ -102,10 +103,10 @@ const mapStateToProps = ({ product }: IRootState) => ({
 
 const mapDispatchToProps = (dispatch: any) => {
     return {
-        getAllProducts: (page: number, size: number, sort: string) => dispatch(getAllProducts(page, size, sort))
+        getAllProductsAfterSearch: (page: number, size: number, sort: string, searchInput: string) => dispatch(getAllProductsAfterSearch(page, size, sort, searchInput))
     }
 }
 
 type StateProps = ReturnType<typeof mapStateToProps>;
 
-export default connect(mapStateToProps, mapDispatchToProps)(Products);
+export default connect(mapStateToProps, mapDispatchToProps)(ProductsAfterSearch);

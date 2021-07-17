@@ -10,3 +10,5 @@ export interface IUser {
     roles?: IRole[];
     orders?: IOrder[];
 }
+
+export const defaultValue: Readonly<IUser> = {};

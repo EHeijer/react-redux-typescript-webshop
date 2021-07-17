@@ -1,5 +1,5 @@
 import { Button, Card, Checkbox, Dialog, DialogContent, DialogTitle, FormControlLabel, Grid, makeStyles, Modal, TextField, Theme, Typography } from "@material-ui/core";
-import { useState } from "react";
+import { BaseSyntheticEvent, FormEventHandler, SyntheticEvent, useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { useBetween } from "use-between";
 import { IRootState } from "../reducers";
@@ -7,6 +7,12 @@ import { useShareableState } from "./utils/shareable-state";
 import {useForm, Controller} from 'react-hook-form';
 import styled from 'styled-components';
 import Link from '@material-ui/core/Link';
+import { getAllUsers, signIn } from "../reducers/auth.reducer";
+import { calendarFormat } from "moment";
+import { GetAuthorities, GetCurrentUser } from "../shared/autentication";
+import { IJwtResponse } from "../model/jwt-response.model";
+import { RoleType } from "../model/role.model";
+import { useHistory } from "react-router";
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -15,7 +21,7 @@ const useStyles = makeStyles((theme: Theme) => {
         },
         dialogContent: {
             width: 300,
-            height: 330
+            height: 350
         },
         form: {
             display: 'flex',
@@ -81,21 +87,24 @@ const StyledTextField = styled(TextField)`
 ` as typeof TextField;
 
 export interface ILoginModalProps extends StateProps{
-    handleLoginOpen: any
+    handleLoginOpen: any,
+    login: any,
 }
 
 type FormValues = {
-    email: string;
-    password: string;
-    remember: boolean;
+    email: '';
+    password: '';
+    remember: false;
 }
 
 const LoginModal = (props: ILoginModalProps) => {
+    const { loginSuccess, errorMessage, currentUser} = props;
+    const [user, setUser] = useState({} as IJwtResponse)
     const classes = useStyles();
     const { loginModalOpen, setLoginModalOpen } = useBetween(useShareableState);
     const { registerModalOpen, setRegisterModalOpen } = useBetween(useShareableState);
-    const {register, handleSubmit, control} = useForm<FormValues>();
-
+    const {register, handleSubmit, control, reset } = useForm<FormValues>();
+    const history = useHistory();
     const handleClose = () => {
         setLoginModalOpen(false);
     }
@@ -105,13 +114,29 @@ const LoginModal = (props: ILoginModalProps) => {
         setRegisterModalOpen(true);
     }
 
-    const loginUser = (data: any) => {
-        console.log(data);
+    const loginUser = (data: FormValues, e: any) => {
+        e.preventDefault()
+        /*Normally I would use data(FormValues), but there's a bug when register a
+        new user and then try to log in after that. data is empty*/
+        props.login(e.target[0].value, e.target[1].value, e.target[2].value);
+        reset({})
+        
     }
+    useEffect(() => {
+        if(currentUser){
+            setLoginModalOpen(false)
+            setUser(currentUser);
+            if(user.roles) {
+                if(user.roles?.includes(RoleType.ROLE_ADMIN)){
+                    history.push('/account')
+                }
+            }
+        }
+    }, [currentUser, user])
 
     return (
         <Dialog classes={{paper: classes.paper}} open={loginModalOpen} onClose={handleClose} className={classes.loginModal}>
-            <DialogTitle>
+            <DialogTitle disableTypography>
                 <Typography variant="h4" align="center">Sign In</Typography>
             </DialogTitle>
             <DialogContent className={classes.dialogContent}>
@@ -151,6 +176,10 @@ const LoginModal = (props: ILoginModalProps) => {
                         }
                         label="Remember me"
                     />
+                    {errorMessage && errorMessage !== null ?
+                        <Typography variant="body1" align="center" color="error">{errorMessage}</Typography>
+                        : null
+                    }
                     <Button 
                         type="submit"
                         variant="outlined"
@@ -174,13 +203,16 @@ const LoginModal = (props: ILoginModalProps) => {
     )
 }
 
-const mapStateToProps = ({  }: IRootState) => ({
-
+const mapStateToProps = ({ auth }: IRootState) => ({
+    errorMessage: auth.loginErrorMessage,
+    currentUser: auth.loggedInUser,
+    loginSuccess: auth.loginSuccess,
+    isAuthenticated: auth.isAuthenticated,
 })
 
 const mapDispatchToProps = (dispatch: any) => {
     return {
-        
+        login: (email: string, password: string, remember: boolean) => dispatch(signIn(email, password, remember)),
     }
 }
 

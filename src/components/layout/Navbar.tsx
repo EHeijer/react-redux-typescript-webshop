@@ -4,12 +4,15 @@ import PersonOutlineIcon from '@material-ui/icons/PersonOutline';
 import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
 import CartDrawer from './CartDrawer';
 import { useShareableState } from '../utils/shareable-state';
-import { useEffect, useState } from 'react';
+import { createRef, FormEvent, FormEventHandler, MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
 import { useBetween } from 'use-between';
 import { IRootState } from '../../reducers';
 import { connect } from 'react-redux';
 import LoginModal from '../LoginModal';
 import RegisterModal from '../RegisterModal';
+import AccountDropdown from './AccountDropdown';
+import { useOnClickOutside } from '../utils/custom-hooks';
+import { useHistory } from 'react-router';
 
 
 const drawerWidth = 300;
@@ -74,15 +77,18 @@ const useStyles = makeStyles((theme: Theme) => {
             flexGrow: 1,
         },
         accountAndCart: {
-            color: theme.palette.primary.dark
+            color: 'black'
         },
         cartButton: {
 
         },
+        iconBtn: {
+            position: 'relative'
+        },
         emptyCartMessage: {
             position: 'absolute',
-            right: 37,
-            top: 75
+            right: 42,
+            top: 70
         },
         box: {
             width: 300,
@@ -97,12 +103,15 @@ const useStyles = makeStyles((theme: Theme) => {
                 content: '" "',
                 position: 'absolute',
                 right: 10,
-                top: '-15px',
+                top: '-10px',
                 borderTop: 'none',
-                borderRight: '15px solid transparent',
-                borderLeft: '15px solid transparent',
-                borderBottom: '15px solid white',
+                borderRight: '10px solid transparent',
+                borderLeft: '10px solid transparent',
+                borderBottom: '10px solid white',
             }
+
+        },
+        account: {
 
         }
     }
@@ -116,11 +125,19 @@ function Navbar(props: INavbarProp) {
     const classes = useStyles();
     const { open, setOpen } = useBetween(useShareableState);
     const { cartDrawerOpen, setCartDrawerOpen } = useBetween(useShareableState);
-    const { loginModalOpen, setLoginModalOpen } = useBetween(useShareableState);
     const { numOfItems } = props;
     const [ openEmptyCartMessage, setOpenEmptyCartMessage ] = useState(false);
     const emptyCartMessage = document.getElementsByClassName('emptyCartMessage');
     const cartButton = document.getElementsByClassName('cartButton');
+    const [hideDropdown, setHideDropdown] = useState(true);
+    const { loginModalOpen, setLoginModalOpen } = useBetween(useShareableState);
+    const { registerModalOpen, setRegisterModalOpen } = useBetween(useShareableState);
+    const dropdown = useRef(null);
+    const cartRef = useRef(null);
+    useOnClickOutside(dropdown, () => showDropdown());
+    useOnClickOutside(cartRef, () => setOpenEmptyCartMessage(false));
+    const [ searchInput, setSearchInput ] = useState('');
+    const history = useHistory();
 
     const handleDrawerOpen = () => {
         const cart = localStorage.getItem("cart") ? JSON.parse(localStorage.getItem('cart')!) : null;
@@ -142,57 +159,81 @@ function Navbar(props: INavbarProp) {
         }
     }
 
+    const showDropdown = () => {
+        setHideDropdown(!hideDropdown)
+    }
+
     const handleLoginOpen = () => {
         setLoginModalOpen(true);
     }
     
+    const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        if(searchInput.trim().length > 0){
+            history.push(`/search/${searchInput}`);
+        }
+       
+    }
+    
     return (
         <div className={classes.root}>
-        <AppBar className={classes.appbar} elevation={0}>
-            <Toolbar>
-                <div className={classes.search}>
-                    <div className={classes.searchIcon}>
-                        <SearchIcon className={classes.icon}/>
+            <AppBar className={classes.appbar} elevation={0}>
+                <Toolbar>
+                    <div className={classes.search}>
+                        <div className={classes.searchIcon}>
+                            <SearchIcon className={classes.icon}/>
+                        </div>
+                        <form onSubmit={handleSearch}>
+                        <InputBase 
+                            autoFocus={true}
+                            placeholder="Search..."
+                            classes={{
+                                root: classes.inputRoot,
+                                input: classes.inputInput,
+                                focused: classes.focus
+                            }}
+                            inputProps={{ 'aria-label': 'search'}}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                        />
+                        </form>
                     </div>
-                    <InputBase 
-                        autoFocus={true}
-                        placeholder="Search..."
-                        classes={{
-                            root: classes.inputRoot,
-                            input: classes.inputInput,
-                            focused: classes.focus
-                        }}
-                        inputProps={{ 'aria-label': 'search'}}
-                    />
-                </div>
-                <div className={classes.grow}></div>
-                <div>
-                    <IconButton
-                        aria-haspopup="true"
-                        onClick={handleLoginOpen}
-                    >
-                        <PersonOutlineIcon classes={{root: classes.accountAndCart}} fontSize="large"/>
-                    </IconButton>
-                    <IconButton className={classes.cartButton} onClick={handleDrawerOpen}>
-                        <Badge
-                            badgeContent={numOfItems} 
-                            color="error"
+                    <div className={classes.grow}></div>
+                    <div>
+                        <IconButton
+                            aria-haspopup="true"
+                            onClick={showDropdown}
+                            className={classes.iconBtn}
+                            disabled={!hideDropdown}
                         >
-                            <ShoppingCartIcon classes={{root: classes.accountAndCart}} fontSize="large" />
-                        </Badge>
-                    </IconButton>
-                </div>
-            </Toolbar>
-            {openEmptyCartMessage ? 
-                <div className={classes.emptyCartMessage}>
-                    <div className={classes.box + ' ' + classes.arrow}>
-                        <Typography variant="h6">Your cart is empty</Typography>
+                            <PersonOutlineIcon classes={{root: classes.accountAndCart}} fontSize="large"/>
+                        </IconButton>
+                        {!hideDropdown && (
+                                <AccountDropdown setRef={dropdown}/>
+                        )}
+                        <IconButton 
+                            disabled={openEmptyCartMessage} 
+                            className={classes.cartButton} 
+                            onClick={handleDrawerOpen}>
+                            <Badge
+                                badgeContent={numOfItems} 
+                                color="error"
+                            >
+                                <ShoppingCartIcon classes={{root: classes.accountAndCart}} fontSize="large" />
+                            </Badge>
+                        </IconButton>
                     </div>
-                </div> : null}
-        </AppBar>
-        <CartDrawer open={cartDrawerOpen} handleDrawerOpen={handleDrawerOpen}/>
-        <LoginModal handleLoginOpen={handleLoginOpen}/>
-        <RegisterModal />
+                </Toolbar>
+                {openEmptyCartMessage ? 
+                    <div className={classes.emptyCartMessage}>
+                        <div className={classes.box + ' ' + classes.arrow}>
+                            <Typography variant="h6">Your cart is empty</Typography>
+                        </div>
+                    </div> : null}
+            </AppBar>
+            <LoginModal handleLoginOpen={handleLoginOpen}/>
+            <RegisterModal />
+            <CartDrawer setRef={cartRef} open={cartDrawerOpen} handleDrawerOpen={handleDrawerOpen}/>
         </div>
     )
 }

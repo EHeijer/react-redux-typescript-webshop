@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme: Theme) => {
         title: {
             padding: 0,
             color: theme.palette.primary.contrastText,
-            fontSize: 28,
+            fontSize: 30,
             fontFamily: 'Dosis',
             fontWeight: 600,
             '&:hover': {
@@ -42,7 +42,7 @@ const useStyles = makeStyles((theme: Theme) => {
             },
         },
         active: {
-            background: '#515151',
+            background: theme.palette.primary.main,
             '&:hover': {
                 color: theme.palette.secondary.dark,
                 background: theme.palette.primary.main
@@ -53,7 +53,7 @@ const useStyles = makeStyles((theme: Theme) => {
         },
         primaryText: {
             fontWeight: 600,
-            fontSize: 18
+            fontSize: 22
         },
         hr: {
             background: theme.palette.primary.main,

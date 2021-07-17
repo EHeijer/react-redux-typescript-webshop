@@ -55,7 +55,6 @@ function Supplements(props: ISupplementsProp) {
 
     useEffect(() => {
         props.getAllSupplements(activePage - 1, itemsPerPage, `${sort},${order}`, 'SUPPLEMENT');
-        console.log(totalItems)
     }, [activePage]);
 
     return (

@@ -1,11 +1,12 @@
 import { Button, Divider, Drawer, IconButton, List, ListItem, makeStyles, Theme, Typography, useTheme } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close';
 import moment from 'moment';
-import React, { useEffect, useState } from 'react'
+import React, { MutableRefObject, useEffect, useState } from 'react'
 import { connect } from 'react-redux';
 import { RouteComponentProps, useHistory } from 'react-router';
 import { useBetween } from 'use-between';
 import { ICartItem } from '../../model/cart-item.model';
+import { IJwtResponse } from '../../model/jwt-response.model';
 import { IOrder } from '../../model/order.model';
 import { IOrderline } from '../../model/orderline.model';
 import { IRootState } from '../../reducers';
@@ -83,15 +84,17 @@ export interface ICartProp extends StateProps{
     handleDrawerOpen: any,
     open: boolean,
     getAllCartItems: any,
-    sendOrder: any
+    sendOrder: any,
+    setRef: MutableRefObject<null>
 }
 
 function CartDrawer(props: ICartProp) {
     const classes = useStyles();
     const { open, setOpen} = useBetween(useShareableState);
     const { cartDrawerOpen, setCartDrawerOpen } = useBetween(useShareableState);
+    const { loginModalOpen, setLoginModalOpen } = useBetween(useShareableState);
     const [sum, setSum] = useState('');
-    const { cartItems, cartSum, numOfItems, order} = props;
+    const { cartItems, cartSum, numOfItems, order, setRef, errorMessage} = props;
     const history = useHistory();
     const [ orderId, setOrderId ] = useState(0);
   
@@ -100,25 +103,28 @@ function CartDrawer(props: ICartProp) {
     }
 
     const handleSendOrder = (cart: ICartItem[]) => {
-        let orderlines = [] as Array<IOrderline>;
-        cart.map(item => {
-            const orderline: IOrderline = {
-                quantity: item.quantity,
-                sumOfOrderline: item.quantity * item.item.price!,
-                product: item.item
-            };
-            return orderlines = [...orderlines, orderline];
-        })
-        let newOrder: IOrder = {
-            userId: 1,
-            orderSum: cartSum,
-            orderlines: orderlines,
-            dateCreated: moment()
+        const currentUser: IJwtResponse = JSON.parse(localStorage.getItem('currentUser')!);
+        if(currentUser){
+            const currentUserId = currentUser.id;
+            let orderlines = [] as Array<IOrderline>;
+            cart.map(item => {
+                const orderline: IOrderline = {
+                    quantity: item.quantity,
+                    sumOfOrderline: item.quantity * item.item.price!,
+                    product: item.item
+                };
+                return orderlines = [...orderlines, orderline];
+            })
+            let newOrder: IOrder = {
+                userId: currentUserId,
+                orderSum: cartSum,
+                orderlines: orderlines,
+                dateCreated: moment()
+            }
+            props.sendOrder(newOrder, currentUser.accessToken);
+        } else {
+            setLoginModalOpen(true);
         }
-        props.sendOrder(newOrder);
-
-        console.log(newOrder);
-        history.push(`/order-confirm`);
     }
 
     useEffect(() => {
@@ -128,11 +134,19 @@ function CartDrawer(props: ICartProp) {
     useEffect(() => {
         if(order.id){
             setOrderId(order.id);
+            history.push(`/order-confirm`);
         }
     }, [order])
 
+    useEffect(() => {
+        if(errorMessage !== null) {
+            history.push('/error-page')
+        }
+    }, [errorMessage])
+
     return (
         <Drawer 
+            ref={setRef}
             className={classes.drawer}
             variant="persistent"
             anchor="right"
@@ -185,13 +199,14 @@ const mapStateToProps = ({ cart, order }: IRootState) => ({
     cartItems: cart.cartItems,
     cartSum: cart.cartSum,
     numOfItems: cart.numOfItems,
-    order: order.order
+    order: order.order,
+    errorMessage: order.errorMessage
 })
 
 const mapDispatchToProps = (dispatch: any) => {
     return {
         getAllCartItems: () => dispatch(getAllCartItems()),
-        sendOrder: (order: IOrder) => dispatch(sendOrder(order))
+        sendOrder: (order: IOrder, token: string) => dispatch(sendOrder(order, token))
     }
 }
 

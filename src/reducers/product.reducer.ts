@@ -4,7 +4,8 @@ import { FAILURE, REQUEST, SUCCESS } from "./action-type.util";
 
 export const ACTION_TYPES = {
     FETCH_PRODUCT_LIST: 'FETCH_PRODUCT_LIST',
-    FETCH_PRODUCT_LIST_BY_CATERGORY: 'FETCH_PRODUCT_LIST_BY_CATERGORY'
+    FETCH_PRODUCT_LIST_BY_CATERGORY: 'FETCH_PRODUCT_LIST_BY_CATERGORY',
+    FETCH_PRODUCT_LIST_AFTER_SEARCH: 'FETCH_PRODUCT_LIST_AFTER_SEARCH'
 }
 
 const initialState = {
@@ -20,6 +21,7 @@ const ProductReducer = (state: ProductState = initialState, action: any): Produc
     switch (action.type) {
         case REQUEST(ACTION_TYPES.FETCH_PRODUCT_LIST):
         case REQUEST(ACTION_TYPES.FETCH_PRODUCT_LIST_BY_CATERGORY):
+        case REQUEST(ACTION_TYPES.FETCH_PRODUCT_LIST_AFTER_SEARCH):
             return {
                 ...state,
                 errorMessage: null,
@@ -27,6 +29,7 @@ const ProductReducer = (state: ProductState = initialState, action: any): Produc
             };
         case FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST):
         case FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST_BY_CATERGORY):
+        case FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST_AFTER_SEARCH):
             return {
                 ...state,
                 loading: false,
@@ -34,6 +37,7 @@ const ProductReducer = (state: ProductState = initialState, action: any): Produc
             };
         case SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST):
         case SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST_BY_CATERGORY):
+        case SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST_AFTER_SEARCH):
             return {
                 ...state,
                 loading: false,
@@ -87,6 +91,27 @@ const fetchProductsByCategoryFailure = (error: string) => {
     }
 }
 
+const fetchProductsAfterSearchRequest = () => {
+    return {
+        type: REQUEST(ACTION_TYPES.FETCH_PRODUCT_LIST_AFTER_SEARCH)
+    }
+}
+
+const fetchProductsAfterSearchSuccess = (products: IProduct[], headers: any) => {
+    return {
+        type: SUCCESS(ACTION_TYPES.FETCH_PRODUCT_LIST_AFTER_SEARCH),
+        payload: products,
+        headers: headers
+    }
+}
+
+const fetchProductsAfterSearchFailure = (error: string) => {
+    return {
+        type: FAILURE(ACTION_TYPES.FETCH_PRODUCT_LIST_AFTER_SEARCH),
+        payload: error
+    }
+}
+
 const apiUrl = 'http://localhost:8080/api/products';
 
 export const getAllProducts = (page: number, size: number, sort: string) => {
@@ -97,6 +122,7 @@ export const getAllProducts = (page: number, size: number, sort: string) => {
         .then(response => {
             const products = response.data;
             const headers = response.headers;
+            console.log(headers)
             dispatch(fetchProductsSuccess(products, headers))
         })
         .catch(error => {
@@ -120,6 +146,23 @@ export const getAllProductsByCategory = (page: number, size: number, sort: strin
             const errorMsg = error.message
             dispatch(fetchProductsByCategoryFailure(errorMsg))
         })
+    };
+}
+
+export const getAllProductsAfterSearch = (page: number, size: number, sort: string, searchInput: string) => {
+    const requestUrl = `${apiUrl}/search/${searchInput}${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;
+    return (dispatch: any) => {
+        dispatch(fetchProductsAfterSearchRequest);
+        axios.get<IProduct[]>(requestUrl)
+            .then(response => {
+                const products = response.data;
+                const headers = response.headers;
+                dispatch(fetchProductsAfterSearchSuccess(products, headers));
+            })
+            .catch(error => {
+                const errorMsg = error.message;
+                dispatch(fetchProductsAfterSearchFailure(errorMsg));
+            });
     };
 }
 

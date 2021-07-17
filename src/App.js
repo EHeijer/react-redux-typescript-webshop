@@ -5,14 +5,15 @@ import { amber } from '@material-ui/core/colors';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import Routes from './routes';
+import { RemoveCurrentUserIfTokenHasExpired } from './shared/autentication';
 
 
 const theme = createMuiTheme({
   palette: {
     primary: {
-      main: '#515151',
-      dark: '#262626',
-      light: '#dedede',
+      main: '#8795a1',
+      dark: '#3d4852',
+      light: '#dae1e7',
       contrastText: '#fff'
     },
     secondary: amber
@@ -28,19 +29,14 @@ const theme = createMuiTheme({
 })
 
 function App() {
+
+  //Removes/logout current user from localstorage if token has expired
+  RemoveCurrentUserIfTokenHasExpired();
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <AppLayout>
           <Routes />
-          {/* <Switch>
-            <Route exact path="/">
-              <Home />
-            </Route>
-            <Route path="/products">
-              <Products />
-            </Route>
-          </Switch> */}
         </AppLayout>
       </Router>
     </ThemeProvider>

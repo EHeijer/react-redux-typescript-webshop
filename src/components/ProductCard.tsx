@@ -87,7 +87,7 @@ const ProductCard = (props: IProductCardProps) => {
                 <CardHeader className={classes.header}/>
                 <CardMedia 
                     className={classes.image}
-                    image={`./${product.imageUrl}`}
+                    image={`../${product.imageUrl}`}
                     title="product name"
                 />
                 <CardContent classes={{root: classes.content}} >

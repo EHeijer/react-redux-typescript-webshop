@@ -5,6 +5,7 @@ import { IRootState } from "../reducers";
 import { getAllCartItems } from "../reducers/cart.reducer";
 import { sendOrder } from "../reducers/order.reducer";
 import KeyboardBackspaceIcon from '@material-ui/icons/KeyboardBackspace';
+import ErrorPage from "./ErrorPage";
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -82,8 +83,11 @@ export interface IOrderConfirmProp extends StateProps{
 
 function OrderConfirm(props: IOrderConfirmProp) {
     const classes = useStyles();
-    const { cartItems, cartSum, numOfItems, order} = props;
+    const { cartItems, cartSum, numOfItems, order, errorMessage} = props;
     return (
+        errorMessage ? (
+            <ErrorPage />
+        ) : (
         <div className={classes.root}>
             <Container className={classes.orderConfirmContainer}>
                 <Button
@@ -146,20 +150,20 @@ function OrderConfirm(props: IOrderConfirmProp) {
                 </TableContainer>
             </Container>
         </div>
-    )
+    ))
 }
 
 const mapStateToProps = ({ cart, order }: IRootState) => ({
     cartItems: cart.cartItems,
     cartSum: cart.cartSum,
     numOfItems: cart.numOfItems,
-    order: order.order
+    order: order.order,
+    errorMessage: order.errorMessage
 })
 
 const mapDispatchToProps = (dispatch: any) => {
     return {
-        getAllCartItems: () => dispatch(getAllCartItems()),
-        sendOrder: (order: IOrder) => dispatch(sendOrder(order))
+        getAllCartItems: () => dispatch(getAllCartItems())
     }
 }
 

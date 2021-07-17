@@ -49,7 +49,8 @@ const OrderReducer = (state: OrderState = initialState, action: any): OrderState
             return {
                 ...state,
                 loading: false,
-                orders: action.payload
+                orders: action.payload,
+                totalItems: parseInt(action.headers['x-total-items'])
             };
         case SUCCESS(ACTION_TYPES.FETCH_ORDER):  
             return {
@@ -68,6 +69,7 @@ const OrderReducer = (state: OrderState = initialState, action: any): OrderState
     }
 }
 
+//send order - Action creators
 const sendOrderRequest = () => {
     return {
         type: REQUEST(ACTION_TYPES.SEND_ORDER)
@@ -88,26 +90,74 @@ const sendOrderFailure = (error: string) => {
     }
 }
 
+//fetch order by current user - Action creators
+const fetchOrdersByCurrentUserRequest = () => {
+    return {
+        type: REQUEST(ACTION_TYPES.FETCH_ORDER_LIST_BY_CURRENT_USER)
+    }
+}
+
+const fetchOrdersByCurrentUserSuccess = (orders: IOrder[], headers: string[]) => {
+    return {
+        type: SUCCESS(ACTION_TYPES.FETCH_ORDER_LIST_BY_CURRENT_USER),
+        payload: orders,
+        headers: headers
+    }
+}
+
+const fetchOrdersByCurrentUserFailure = (error: string) => {
+    return {
+        type: FAILURE(ACTION_TYPES.FETCH_ORDER_LIST_BY_CURRENT_USER),
+        payload: error
+    }
+}
+
 const apiUrl = 'http://localhost:8080/api/orders';
 
-export const sendOrder = (order: IOrder) => {
+export const sendOrder = (order: IOrder, token: string) => {
     return (dispatch: any) => {
         dispatch(sendOrderRequest);
-        axios.post(apiUrl, order)
-            .then(response => {
-                const order = response.data;
-                dispatch(sendOrderSuccess(order));
+        axios.post(apiUrl, order, {
+           'headers': {
+               'Authorization': 'Bearer ' + token
+           } 
+        })
+        .then(response => {
+            const order = response.data;
+            dispatch(sendOrderSuccess(order));
 
-                if(localStorage.getItem("cart")){
-                    let cart = JSON.parse(localStorage.getItem('cart')!);
-                    cart = [];
-                    localStorage.setItem("cart", JSON.stringify(cart));
-                }
-            })
-            .catch(error => {
-                const errorMsg = error.message;
-                dispatch(sendOrderFailure(errorMsg));
-            })
+            if(localStorage.getItem("cart")){
+                let cart = JSON.parse(localStorage.getItem('cart')!);
+                cart = [];
+                localStorage.setItem("cart", JSON.stringify(cart));
+            }
+        })
+        .catch(error => {
+            const errorMsg = error.message;
+            dispatch(sendOrderFailure(errorMsg));
+        })
+    };
+};
+
+export const getOrdersByCurrentUser = (page: number, size: number, sort: string, token: string) => {
+    console.log(token)
+    const requestUrl = `${apiUrl}-by-user${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;
+    return (dispatch: any) => {
+        dispatch(fetchOrdersByCurrentUserRequest);
+        axios.get<IOrder[]>(requestUrl, {
+            'headers': {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(response => {
+            const orders = response.data;
+            const headers = response.headers;
+            dispatch(fetchOrdersByCurrentUserSuccess(orders, headers));
+        })
+        .catch(error => {
+            const errorMsg = error.message;
+            dispatch(fetchOrdersByCurrentUserFailure(errorMsg));
+        })
     };
 };
 

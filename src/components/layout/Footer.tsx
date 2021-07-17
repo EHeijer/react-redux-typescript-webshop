@@ -6,8 +6,9 @@ const useStyles = makeStyles((theme: Theme) => {
     return {
         footer: {
             height: 200,
-            background: theme.palette.primary.light,
-            padding: '3rem 0'
+            background: theme.palette.primary.main,
+            padding: '3rem 0',
+            color: 'white'
         },
         footerContainer: {
             height: '100%',
@@ -27,13 +28,13 @@ const useStyles = makeStyles((theme: Theme) => {
             flex: 1
         },
         submitButton: {
-            background: theme.palette.primary.main,
+            background: theme.palette.primary.dark,
             color: theme.palette.primary.contrastText,
             padding: 14,
             borderRadius: '0 3px 3px 0',
             '&:hover': {
                 color: theme.palette.secondary.dark,
-                background: theme.palette.primary.main
+                background: theme.palette.primary.dark
             },
         },
         text: {
